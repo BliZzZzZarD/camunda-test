@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <title>Camunda-test</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <script type="text/javascript" src="webjars/jquery/3.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="webjars/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="webjars/bootstrap/4.5.0/css/bootstrap.min.css"/>
+</head>
+<body>
+<div class="container pt-3">
+    <h2 class="text-primary">Решение квадратного уравнения с помощью BPM Camunda:</h2>
+    <h6 class="text-primary">*При пустых значениях A=1, B=1, C=0</h6>
+    <div class="input-group mt-3">
+        <label>
+            <input id="arg-a" type="number" placeholder="аргумент A" class="form-control"/>
+        </label>
+        <div class="pl-1 pr-1 pt-2">X<sup>2</sup>&nbsp;+</div>
+        <label>
+            <input id="arg-b" type="number" placeholder="аргумент B" class="form-control"/>
+        </label>
+        <div class="pl-1 pr-1 pt-2">X&nbsp;+</div>
+        <label>
+            <input id="arg-c" type="number" placeholder="аргумент C" class="form-control"/>
+        </label>
+        <div class="pl-1 pr-1 pt-2">=&nbsp;0</div>
+        <div class="pl-1 pr-1">
+            <button id="calc" type="button" class="btn btn-primary">Рассчитать</button>
+        </div>
+        <div class="pl-1 pr-1">
+            <button id="clean" type="button" class="btn btn-primary">Очистить</button>
+        </div>
+    </div>
+    <div id="result-block" class="container mt-3" style="display: none">
+        <div style="width: 50%">
+            <hr style="width: 100%" class="text-primary"/>
+        </div>
+        <div id="result" class="container pt-1">
+            <div class="input-group mt-1">
+                <div>
+                    <h6 class="text-primary mt-2">Дискриминант: <span id="discriminant-value"></span></h6>
+                </div>
+                <div class="pl-2">
+                    <button id="discriminant" type="button" class="btn btn-primary">Получить дискриминант</button>
+                    <button id="calc-solution" type="button" class="btn btn-primary" style="display: none">Рассчитать корни</button>
+                </div>
+            </div>
+            <div id="solution-block" class="input-group mt-3" style="display: none">
+                <div>
+                    <h6 class="text-primary mt-2">Решение: <span id="solution-value"></span></h6>
+                </div>
+                <div class="pl-2">
+                    <button id="solution" type="button" class="btn btn-primary">Получить корни</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    $(document).ready(() => {
+        let processInstanceId;
+
+        const discriminant = $("#discriminant");
+        const discriminantValue = $("#discriminant-value");
+        const calcSolution = $("#calc-solution");
+        const solution = $("#solution");
+        const resultBlock = $("#result-block");
+        const solutionValue = $("#solution-value");
+        const solutionBlock = $("#solution-block");
+
+        const argA = $("#arg-a");
+        const argB = $("#arg-b");
+        const argC = $("#arg-c");
+
+        $("#calc").on("click", () => {
+            setDefaultBlockProps();
+
+            const data = {
+                argA: argA.val(),
+                argB: argB.val(),
+                argC: argC.val()
+            };
+
+            $.ajax({
+                url: "calc",
+                data: data
+            }).done(function (response) {
+                processInstanceId = response
+                resultBlock.show();
+            });
+        });
+
+        $("#clean").on("click", () => {
+            argA.val('');
+            argB.val('');
+            argC.val('');
+
+            setDefaultBlockProps();
+        });
+
+        function setDefaultBlockProps() {
+            discriminantValue.html('Идет расчет');
+            solutionValue.html('Идет расчет');
+
+            discriminant.show();
+            calcSolution.hide();
+
+            resultBlock.hide();
+            solutionBlock.hide();
+            solution.show();
+        }
+
+        discriminant.on("click", () => {
+            const data = {
+                processInstanceId: processInstanceId
+            };
+
+            $.ajax({
+                url: "discriminant",
+                data: data
+            }).done(function (response) {
+                discriminantValue.html(response)
+
+                if (!isNaN(Number(response))) {
+                    discriminant.hide();
+                    calcSolution.show();
+                }
+            });
+        });
+
+        calcSolution.on("click", () => {
+            const data = {
+                processInstanceId: processInstanceId
+            };
+
+            $.ajax({
+                url: "calc_solution",
+                data: data
+            }).done(function () {
+                calcSolution.hide();
+                solutionBlock.show();
+            }).fail(function (response) {
+                discriminantValue.html(response.responseText)
+                calcSolution.hide();
+            });
+        });
+
+        solution.on("click", () => {
+            const data = {
+                processInstanceId: processInstanceId
+            };
+
+            $.ajax({
+                url: "solution",
+                data: data
+            }).done(function (response, status) {
+                if (status === "success") {
+                    solutionValue.html(response)
+
+                    if (response !== 'Расчет еще не закончен') {
+                        solution.hide();
+                    }
+                } else {
+                    solutionValue.html(response)
+                    solution.hide();
+                }
+            });
+        });
+    });
+</script>
+</html>
+

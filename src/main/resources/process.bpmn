@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_0ma9xhb" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.0.0">
+  <bpmn:process id="camunda-test-process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1nyf8dr</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1nyf8dr" sourceRef="StartEvent_1" targetRef="Activity_0cqerj9" />
+    <bpmn:serviceTask id="Activity_0cqerj9" name="Считаем дискриминант и отправляем ответ пользователю" camunda:asyncBefore="true" camunda:delegateExpression="${DiscriminantCalculation}">
+      <bpmn:incoming>Flow_1nyf8dr</bpmn:incoming>
+      <bpmn:outgoing>Flow_0e0theb</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0e0theb" sourceRef="Activity_0cqerj9" targetRef="Activity_16337v5" />
+    <bpmn:userTask id="Activity_16337v5" name="Дожидаемся ответа пользователя считать ли корни уравнения">
+      <bpmn:incoming>Flow_0e0theb</bpmn:incoming>
+      <bpmn:outgoing>Flow_0vmde3e</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_11xqxw7" default="Flow_117t5kc">
+      <bpmn:incoming>Flow_0vmde3e</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ovvat0</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0egbtmk</bpmn:outgoing>
+      <bpmn:outgoing>Flow_117t5kc</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0ovvat0" sourceRef="Gateway_11xqxw7" targetRef="Activity_0wjydnn">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${discriminant &gt; 0}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0egbtmk" sourceRef="Gateway_11xqxw7" targetRef="Activity_0czsy59">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${discriminant == 0}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0vmde3e" sourceRef="Activity_16337v5" targetRef="Gateway_11xqxw7">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${needCalc}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_0cmv9nb">
+      <bpmn:incoming>Flow_13h3pre</bpmn:incoming>
+      <bpmn:incoming>Flow_1q1xjyb</bpmn:incoming>
+      <bpmn:incoming>Flow_15nmrpo</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_13h3pre" sourceRef="Event_01zpymz" targetRef="Event_0cmv9nb" />
+    <bpmn:serviceTask id="Activity_0wjydnn" name="Получаем два корня уравнения" camunda:asyncBefore="true" camunda:delegateExpression="${TwoSolution}">
+      <bpmn:incoming>Flow_0ovvat0</bpmn:incoming>
+      <bpmn:outgoing>Flow_1nkcezg</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0czsy59" name="Получаем единственный корень уравнения" camunda:asyncBefore="true" camunda:delegateExpression="${OneSolution}">
+      <bpmn:incoming>Flow_0egbtmk</bpmn:incoming>
+      <bpmn:outgoing>Flow_19tpdmd</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Activity_0uu4dfz" name="Дожидаемся получение корней и заканчиваем процесс">
+      <bpmn:incoming>Flow_1nkcezg</bpmn:incoming>
+      <bpmn:incoming>Flow_19tpdmd</bpmn:incoming>
+      <bpmn:incoming>Flow_0ec0p6e</bpmn:incoming>
+      <bpmn:outgoing>Flow_1q1xjyb</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1nkcezg" sourceRef="Activity_0wjydnn" targetRef="Activity_0uu4dfz" />
+    <bpmn:sequenceFlow id="Flow_19tpdmd" sourceRef="Activity_0czsy59" targetRef="Activity_0uu4dfz" />
+    <bpmn:sequenceFlow id="Flow_1q1xjyb" sourceRef="Activity_0uu4dfz" targetRef="Event_0cmv9nb">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${endProcess}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="Activity_1ei3z8x" name="Устанавливаем значение - корней нет" camunda:asyncBefore="true" camunda:delegateExpression="${NoSolution}">
+      <bpmn:incoming>Flow_117t5kc</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ec0p6e</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_117t5kc" sourceRef="Gateway_11xqxw7" targetRef="Activity_1ei3z8x" />
+    <bpmn:sequenceFlow id="Flow_0ec0p6e" sourceRef="Activity_1ei3z8x" targetRef="Activity_0uu4dfz" />
+    <bpmn:boundaryEvent id="Event_01zpymz" name="5 мин" attachedToRef="Activity_16337v5">
+      <bpmn:outgoing>Flow_13h3pre</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_01s6eub">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="Event_0845ew7" name="5 мин" attachedToRef="Activity_0uu4dfz">
+      <bpmn:outgoing>Flow_15nmrpo</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0oddiyk">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT5M</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_15nmrpo" sourceRef="Event_0845ew7" targetRef="Event_0cmv9nb" />
+    <bpmn:textAnnotation id="TextAnnotation_10ivge7">
+      <bpmn:text>Проверка дискрименанта и выбор стратегии поиска корней</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0grj7lk" sourceRef="Gateway_11xqxw7" targetRef="TextAnnotation_10ivge7" />
+    <bpmn:textAnnotation id="TextAnnotation_07v19dc">
+      <bpmn:text>Заканчиваем процесс через 5 минут, если пользователь не запросил рассчет корней уравнения</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1y2eysx" sourceRef="Event_01zpymz" targetRef="TextAnnotation_07v19dc" />
+    <bpmn:textAnnotation id="TextAnnotation_1uo5d86">
+      <bpmn:text>Заканчиваем процесс через 5 минут, если пользователь не запросил корни уравнения</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0qyqq5h" sourceRef="Activity_0uu4dfz" targetRef="TextAnnotation_1uo5d86" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="camunda-test-process">
+      <bpmndi:BPMNShape id="TextAnnotation_07v19dc_di" bpmnElement="TextAnnotation_07v19dc">
+        <dc:Bounds x="330" y="360" width="140" height="83" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1uo5d86_di" bpmnElement="TextAnnotation_1uo5d86">
+        <dc:Bounds x="1070" y="217" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0ec0p6e_di" bpmnElement="Flow_0ec0p6e">
+        <di:waypoint x="880" y="490" />
+        <di:waypoint x="940" y="490" />
+        <di:waypoint x="940" y="370" />
+        <di:waypoint x="970" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_117t5kc_di" bpmnElement="Flow_117t5kc">
+        <di:waypoint x="710" y="282" />
+        <di:waypoint x="710" y="490" />
+        <di:waypoint x="780" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1q1xjyb_di" bpmnElement="Flow_1q1xjyb">
+        <di:waypoint x="1020" y="410" />
+        <di:waypoint x="1020" y="630" />
+        <di:waypoint x="1090" y="630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19tpdmd_di" bpmnElement="Flow_19tpdmd">
+        <di:waypoint x="880" y="370" />
+        <di:waypoint x="970" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nkcezg_di" bpmnElement="Flow_1nkcezg">
+        <di:waypoint x="880" y="257" />
+        <di:waypoint x="940" y="257" />
+        <di:waypoint x="940" y="370" />
+        <di:waypoint x="970" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13h3pre_di" bpmnElement="Flow_13h3pre">
+        <di:waypoint x="540" y="315" />
+        <di:waypoint x="540" y="630" />
+        <di:waypoint x="1090" y="630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0vmde3e_di" bpmnElement="Flow_0vmde3e">
+        <di:waypoint x="590" y="257" />
+        <di:waypoint x="685" y="257" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0egbtmk_di" bpmnElement="Flow_0egbtmk">
+        <di:waypoint x="710" y="282" />
+        <di:waypoint x="710" y="370" />
+        <di:waypoint x="780" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ovvat0_di" bpmnElement="Flow_0ovvat0">
+        <di:waypoint x="735" y="257" />
+        <di:waypoint x="780" y="257" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0e0theb_di" bpmnElement="Flow_0e0theb">
+        <di:waypoint x="370" y="257" />
+        <di:waypoint x="490" y="257" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nyf8dr_di" bpmnElement="Flow_1nyf8dr">
+        <di:waypoint x="188" y="257" />
+        <di:waypoint x="270" y="257" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15nmrpo_di" bpmnElement="Flow_15nmrpo">
+        <di:waypoint x="1088" y="370" />
+        <di:waypoint x="1108" y="370" />
+        <di:waypoint x="1108" y="612" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="239" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0708qcr_di" bpmnElement="Activity_0cqerj9">
+        <dc:Bounds x="270" y="217" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_11xqxw7_di" bpmnElement="Gateway_11xqxw7" isMarkerVisible="true">
+        <dc:Bounds x="685" y="232" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_19xcyes_di" bpmnElement="Activity_0wjydnn">
+        <dc:Bounds x="780" y="217" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0b625nd_di" bpmnElement="Activity_1ei3z8x">
+        <dc:Bounds x="780" y="450" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_10ivge7_di" bpmnElement="TextAnnotation_10ivge7">
+        <dc:Bounds x="760" y="79" width="221.99341021416805" height="40.637012630422845" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18n6ugu_di" bpmnElement="Activity_0czsy59">
+        <dc:Bounds x="780" y="330" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_12iqujx_di" bpmnElement="Activity_16337v5">
+        <dc:Bounds x="490" y="217" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ng4bqe_di" bpmnElement="Activity_0uu4dfz">
+        <dc:Bounds x="970" y="330" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0cmv9nb_di" bpmnElement="Event_0cmv9nb">
+        <dc:Bounds x="1090" y="612" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0grj7lk_di" bpmnElement="Association_0grj7lk">
+        <di:waypoint x="716" y="238" />
+        <di:waypoint x="760" y="99" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1y2eysx_di" bpmnElement="Association_1y2eysx">
+        <di:waypoint x="525" y="306" />
+        <di:waypoint x="434" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_0qyqq5h_di" bpmnElement="Association_0qyqq5h">
+        <di:waypoint x="1058" y="330" />
+        <di:waypoint x="1090" y="297" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_19nvyoa_di" bpmnElement="Event_01zpymz">
+        <dc:Bounds x="522" y="279" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="565" y="303" width="29" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0ghqqyk_di" bpmnElement="Event_0845ew7">
+        <dc:Bounds x="1052" y="352" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1093" y="343" width="29" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
